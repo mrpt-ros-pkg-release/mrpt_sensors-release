@@ -1,0 +1,12 @@
+Source: ros-melodic-mrpt-sensors
+Section: misc
+Priority: optional
+Maintainer: Jose-Luis Blanco-Claraco <jlblanco@ual.es>
+Build-Depends: debhelper (>= 9.0.0), ros-melodic-catkin
+Homepage: https://wiki.ros.org/mrpt_sensors
+Standards-Version: 3.9.2
+
+Package: ros-melodic-mrpt-sensors
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-mrpt-generic-sensor, ros-melodic-mrpt-sensorlib
+Description: ROS nodes for various robotics sensors via mrpt-hwdrivers
