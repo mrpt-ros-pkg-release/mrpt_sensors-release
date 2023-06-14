@@ -1,9 +1,10 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package mrpt_sensors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package mrpt_tutorials
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.0.3 (2023-06-14)
 ------------------
+* fix wrong changelog
 * towards templatized specific sensor nodes
 * Contributors: Jose Luis Blanco Claraco
 
