@@ -1,35 +1,38 @@
+/* mrpt_sensors ROS package
+ *
+ * Copyright 2021-2022, Jose Luis Blanco Claraco
+ * License: BSD 3-Clause License
+ */
 
 #include "mrpt_sensorlib/mrpt_sensorlib.h"
-
 #include <mrpt/system/filesystem.h>
-#if MRPT_VERSION >= 0x199
 #include <mrpt/serialization/CArchive.h>
 #include <mrpt/config/CConfigFile.h>
-using mrpt::config::CConfigFile;
-#else
-#include <mrpt/utils/CConfigFile.h>
-using mrpt::utils::CConfigFile;
-#endif
+#include <mrpt/config/CConfigFileMemory.h>
+#include <mrpt/io/vector_loadsave.h>  // file_get_contents()
+
+#include <mrpt/ros1bridge/point_cloud2.h>
+#include <mrpt/ros1bridge/time.h>
+#include <mrpt/obs/CObservationVelodyneScan.h>
+#include <mrpt/maps/CSimplePointsMap.h>
 
 using namespace mrpt::hwdrivers;
-using namespace mrpt_sensors;
+using namespace mrpt_sensorlib;
+using mrpt::config::CConfigFile;
 
 GenericSensorNode::GenericSensorNode() {}
 
 GenericSensorNode::~GenericSensorNode() {}
 
-void GenericSensorNode::init(int argc, char** argv)
+void GenericSensorNode::internal_init()
 {
 	try
 	{
-		// Load parameters:
-		nhlocal_.getParam("config_file", cfgfilename_);
-		nhlocal_.getParam("config_section", cfg_section_);
-		CConfigFile iniFile(cfgfilename_);
+		ASSERT_(cfgfile_);
 
 		// Call sensor factory:
 		std::string driver_name =
-			iniFile.read_string(cfg_section_, "driver", "", true);
+			cfgfile_->read_string(cfg_section_, "driver", "", true);
 		sensor_ = mrpt::hwdrivers::CGenericSensor::createSensorPtr(driver_name);
 		if (!sensor_)
 		{
@@ -39,7 +42,7 @@ void GenericSensorNode::init(int argc, char** argv)
 		}
 
 		// Load common & sensor specific parameters:
-		sensor_->loadConfig(iniFile, cfg_section_);
+		sensor_->loadConfig(*cfgfile_, cfg_section_);
 
 		// Initialize sensor:
 		sensor_->initialize();
@@ -76,7 +79,77 @@ void GenericSensorNode::init(int argc, char** argv)
 				ROS_ERROR("Error opening output rawlog for writing");
 		}
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
+	{
+		ROS_ERROR_STREAM(
+			"Exception in GenericSensorNode::init(): " << e.what());
+		return;
+	}
+}
+
+void GenericSensorNode::init_from_config_file(	//
+	[[maybe_unused]] int argc, [[maybe_unused]] char** argv)
+{
+	try
+	{
+		// Load parameters:
+		std::string cfgFileName;
+		nhlocal_.getParam("config_file", cfgFileName);
+		cfgfilename_ = cfgFileName;
+
+		cfgfile_ = std::make_shared<mrpt::config::CConfigFile>(*cfgfilename_);
+
+		nhlocal_.getParam("config_section", cfg_section_);
+
+		internal_init();
+	}
+	catch (const std::exception& e)
+	{
+		ROS_ERROR_STREAM(
+			"Exception in GenericSensorNode::init(): " << e.what());
+		return;
+	}
+}
+
+void GenericSensorNode::init_from_template_and_parameters(	//
+	[[maybe_unused]] int argc, [[maybe_unused]] char** argv)
+{
+	using namespace std::string_literals;
+
+	try
+	{
+		// Load parameters:
+		std::string templateFileName;
+		nhlocal_.getParam("template_file", templateFileName);
+		cfgfilename_ = templateFileName;
+
+		ASSERT_FILE_EXISTS_(templateFileName);
+
+		// Read template INI file and prepend all ROS node parameters:
+		std::string cfgContents = mrpt::io::file_get_contents(templateFileName);
+
+		// prepend ros node params:
+		ros::V_string allParams;
+		nhlocal_.getParamNames(allParams);
+		for (const auto& paramName : allParams)
+		{
+			std::string value;
+			if (!nhlocal_.getParam(paramName, value)) continue;
+
+			cfgContents =
+				"@define "s + paramName + " "s + value + "\n" + cfgContents;
+		}
+
+		ROS_INFO_STREAM("cfgContents:\n" << cfgContents);
+
+		// Parse and run:
+		cfgfile_ =
+			std::make_shared<mrpt::config::CConfigFileMemory>(cfgContents);
+		nhlocal_.getParam("template_file_section", cfg_section_);
+
+		internal_init();
+	}
+	catch (const std::exception& e)
 	{
 		ROS_ERROR_STREAM(
 			"Exception in GenericSensorNode::init(): " << e.what());
@@ -99,16 +172,20 @@ void GenericSensorNode::run()
 		sensor_->doProcess();
 
 		// Get new observations
-		CGenericSensor::TListObservations lstObjs;
-		sensor_->getObservations(lstObjs);
+		CGenericSensor::TListObservations lstObjs = sensor_->getObservations();
+
+		for (const auto& o : lstObjs)
+		{
+			if (const auto& obs =
+					std::dynamic_pointer_cast<mrpt::obs::CObservation>(
+						o.second);
+				obs)
+				on_observation(obs);
+		}
 
 		if (out_rawlog_.is_open())
 		{
-#if MRPT_VERSION >= 0x199
 			auto out_arch = mrpt::serialization::archiveFrom(out_rawlog_);
-#else
-			auto& out_arch = out_rawlog_;
-#endif
 			for (const auto& o : lstObjs)
 			{
 				out_arch << *o.second;
@@ -117,4 +194,61 @@ void GenericSensorNode::run()
 
 		ros::spinOnce();
 	}
+}
+
+void GenericSensorNode::on_observation(const mrpt::obs::CObservation::Ptr& o)
+{
+	ASSERT_(o);
+
+	if (const auto& obsVel =
+			std::dynamic_pointer_cast<mrpt::obs::CObservationVelodyneScan>(o);
+		obsVel)
+	{
+		on_observation_velodyne(*obsVel);
+	}
+	else
+	{
+		ROS_WARN(
+			"Do not know how to publish observation '%s' of type '%s'",
+			o->sensorLabel.c_str(), o->GetRuntimeClass()->className);
+	}
+}
+
+void GenericSensorNode::on_observation_velodyne(
+	const mrpt::obs::CObservationVelodyneScan& o)
+{
+	thread_local std::map<std::string, ros::Publisher> publishers;
+
+	ROS_DEBUG("Received velodyne obs: %s", o.sensorLabel.c_str());
+
+	// Create publisher on first use:
+	if (publishers.count(o.sensorLabel) == 0)
+	{
+		publishers[o.sensorLabel] =
+			nh_.advertise<sensor_msgs::PointCloud2>(o.sensorLabel, 20);
+	}
+
+	auto& pub = publishers[o.sensorLabel];
+
+	if (o.point_cloud.size() == 0)
+	{
+		mrpt::obs::CObservationVelodyneScan::TGeneratePointCloudParameters p;
+		p.minDistance = 0.2;
+
+		const_cast<mrpt::obs::CObservationVelodyneScan&>(o)
+			.generatePointCloud();
+	}
+
+	mrpt::maps::CSimplePointsMap pts;
+	pts.loadFromVelodyneScan(o);
+
+	std_msgs::Header hdr;
+	hdr.frame_id = "base_link";
+	hdr.stamp = mrpt::ros1bridge::toROS(o.timestamp);
+
+	sensor_msgs::PointCloud2 velodyneCloud;
+	bool ok = mrpt::ros1bridge::toROS(pts, hdr, velodyneCloud);
+	ASSERT_(ok);
+
+	pub.publish(velodyneCloud);
 }
