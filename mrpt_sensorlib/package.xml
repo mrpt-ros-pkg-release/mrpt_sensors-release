@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mrpt_sensorlib</name>
+  <version>0.0.2</version>
+  <description>C++ library for the base generic MRPT sensor node</description>
+
+  <author email="jlblanco@ual.es">Jose-Luis Blanco-Claraco</author>
+  <maintainer email="jlblanco@ual.es">Jose-Luis Blanco-Claraco</maintainer>
+
+  <license>BSD</license>
+  <url type="website">https://wiki.ros.org/mrpt_sensors</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>mrpt2</depend>
+  <depend>roscpp</depend>
+
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>mrpt_msgs</depend>
+  <depend>message_generation</depend>
+
+  <exec_depend>message_runtime</exec_depend>
+
+  <export>
+  </export>
+</package>
