@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mrpt_generic_sensor</name>
+  <version>0.0.2</version>
+  <description>ROS node for interfacing any sensor supported by mrpt-hwdrivers</description>
+
+  <author email="jlblanco@ual.es">Jose-Luis Blanco-Claraco</author>
+  <maintainer email="jlblanco@ual.es">Jose-Luis Blanco-Claraco</maintainer>
+
+  <license>BSD</license>
+  <url type="website">https://wiki.ros.org/mrpt_sensors</url>
+
+  <!-- Use buildtool_depend for build tool packages: -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>mrpt2</depend>
+  <depend>roscpp</depend>
+  <depend>mrpt_sensorlib</depend>
+
+  <export>
+  </export>
+</package>
