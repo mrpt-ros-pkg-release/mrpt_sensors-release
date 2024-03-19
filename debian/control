@@ -1,0 +1,12 @@
+Source: ros-noetic-mrpt-sensors-examples
+Section: misc
+Priority: optional
+Maintainer: José Luis Blanco-Claraco <joseluisblancoc@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-catkin
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-mrpt-sensors-examples
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-mrpt-generic-sensor
+Description: Example launch and configuration files for mrpt_sensors nodes
