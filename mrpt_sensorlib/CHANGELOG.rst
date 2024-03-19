@@ -2,6 +2,11 @@
 Changelog for package mrpt_sensorlib
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.4 (2024-03-19)
+------------------
+* Fix new mrpt2 API
+* Contributors: Jose Luis Blanco-Claraco
+
 0.0.3 (2023-06-14)
 ------------------
 * Fix build errors with latest mrpt versions
