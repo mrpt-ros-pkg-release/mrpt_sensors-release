@@ -2,6 +2,9 @@
 Changelog for package mrpt_generic_sensor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.4 (2024-03-19)
+------------------
+
 0.0.3 (2023-06-14)
 ------------------
 * towards templatized specific sensor nodes
