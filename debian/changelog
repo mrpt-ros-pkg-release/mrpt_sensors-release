@@ -1,0 +1,21 @@
+ros-noetic-mrpt-sensors (0.0.4-1focal) focal; urgency=high
+
+
+
+ -- Jose-Luis Blanco-Claraco <jlblanco@ual.es>  Mon, 18 Mar 2024 23:00:00 -0000
+
+ros-noetic-mrpt-sensors (0.0.3-1focal) focal; urgency=high
+
+  * towards templatized specific sensor nodes
+  * Contributors: Jose Luis Blanco Claraco
+
+ -- Jose-Luis Blanco-Claraco <jlblanco@ual.es>  Tue, 13 Jun 2023 22:00:00 -0000
+
+ros-noetic-mrpt-sensors (0.0.2-1focal) focal; urgency=high
+
+  * New package
+  * Contributors: Jose Luis Blanco-Claraco
+
+ -- Jose-Luis Blanco-Claraco <jlblanco@ual.es>  Thu, 23 Jun 2022 22:00:00 -0000
+
+
